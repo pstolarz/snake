@@ -1,4 +1,4 @@
-#include "snake_render.h"
+#include "SDL.h"
 
 typedef enum
 {
@@ -20,32 +20,64 @@ typedef struct
     game_state_t state;
     menu_pos_t   menu_position;
 
+    SDL_Window *win;
+    SDL_Renderer *renderer;
+
+    int posX;
+    int posY;
+    int screen_width;
+    int screen_height;
+    
     int running;
 } game_data_t;
 
-static game_data_t g_game_data;
+static game_data_t g_data;
 
 void Snake_Init(void)
 {
-    Render_Init(800, 600);
+    g_data.win = NULL;
+    g_data.renderer = NULL;
 
+    g_data.posX = 100;
+    g_data.posY = 100;
+    g_data.screen_width = 600;
+    g_data.screen_height = 600;
+
+    SDL_Init(SDL_INIT_VIDEO);
+
+    g_data.win = SDL_CreateWindow("LolSnake", g_data.posX, g_data.posY, g_data.screen_width, g_data.screen_height, 0);
+
+    g_data.renderer = SDL_CreateRenderer(g_data.win, -1, SDL_RENDERER_ACCELERATED);
+
+    SDL_SetRenderDrawColor(g_data.renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
+    SDL_Rect frame;
+    frame.x = 50;
+    frame.y = 50;
+    frame.w = 500;
+    frame.h = 500;
+    SDL_RenderDrawRect(g_data.renderer, &frame);
 
 }
 
-void Snake_Update(key_press_t current_key_pressed)
-{
-
-
-}
 
 int Snake_Run(void)
 {
-    while (g_game_data.running)
-    {
-        key_press_t key_pressed = Render_GetLastKeyPressed();
-        Snake_Update(key_pressed);
-        Render_Run();
+    while (1) {
+        SDL_Event e;
+        if (SDL_PollEvent(&e)) {
+            if (e.type == SDL_QUIT) {
+                break;
+            }
+        }
 
-        // sleep 100 ms
+        //SDL_RenderClear(g_data.renderer);
+        SDL_RenderPresent(g_data.renderer);
     }
+    
+    SDL_DestroyRenderer(g_data.renderer);
+    SDL_DestroyWindow(g_data.win);
+
+    SDL_Quit();
+
+    return 0;
 }

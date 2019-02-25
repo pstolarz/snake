@@ -18,17 +18,11 @@
     <ClCompile Include="..\code\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\code\snake_render.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\code\snake_game.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\code\snake_render.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\code\snake_game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
