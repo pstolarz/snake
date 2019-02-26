@@ -22,30 +22,47 @@ typedef enum
     E_KEY_RIGHT
 } key_type_t;
 
-#define FIELD_WIDTH 10
-#define FIELD_HEIGHT 10
+#define LOGICAL_FIELD_WIDTH 10
+#define LOGICAL_FIELD_HEIGHT 10
+
+#define PIXEL_FIELD_WIDTH 50
+#define PIXEL_FIELD_HEIGHT 50
 
 typedef struct
 {
-    field_type_t data[FIELD_WIDTH * FIELD_HEIGHT];
+    // todo: change to linked list to track the tail?
+    field_type_t data[LOGICAL_FIELD_WIDTH * LOGICAL_FIELD_HEIGHT];
+    int head_x;
+    int head_y;
+    int tail_x;
+    int tail_y;
 } field_t;
 
 field_t field;
 
 field_type_t GetFieldType(int x, int y) {
     // toto: sanity check
-    return field.data[x + y * (FIELD_HEIGHT - 1)];
+    int pos = x + y * (LOGICAL_FIELD_HEIGHT);
+    return field.data[pos];
 }
 
 void SetFieldType(int x, int y, field_type_t type) {
     // toto: sanity check
-    field.data[x + y * (FIELD_HEIGHT - 1)] = type;
+    int pos = x + y * (LOGICAL_FIELD_HEIGHT);
+    field.data[pos] = type;
+}
+
+int IsPointValid(int x, int y) {
+    if (x >= 0 && x < LOGICAL_FIELD_WIDTH)
+        if (y >= 0 && y < LOGICAL_FIELD_HEIGHT)
+            return 1;
+    return 0;
 }
 
 typedef struct
 {
-    SDL_Window *win;
-    SDL_Renderer *renderer;
+    SDL_Window * win;
+    SDL_Renderer * renderer;
 
     int posX;
     int posY;
@@ -64,8 +81,8 @@ void Snake_Init(void)
 
     g_data.posX = 100;
     g_data.posY = 100;
-    g_data.screen_width = 600;
-    g_data.screen_height = 600;
+    g_data.screen_width = LOGICAL_FIELD_WIDTH * PIXEL_FIELD_WIDTH;
+    g_data.screen_height = LOGICAL_FIELD_WIDTH * PIXEL_FIELD_WIDTH;
 
     SDL_Init(SDL_INIT_VIDEO);
 
@@ -74,17 +91,133 @@ void Snake_Init(void)
     g_data.renderer = SDL_CreateRenderer(g_data.win, -1, SDL_RENDERER_ACCELERATED);
 
     SDL_SetRenderDrawColor(g_data.renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
-    SDL_Rect frame;
-    frame.x = 0;
-    frame.y = 0;
-    frame.w = 50;
-    frame.h = 50;
-    SDL_RenderDrawRect(g_data.renderer, &frame);
 
+    field.head_x = 3;
+    field.head_y = 3;
+    field.tail_x = 2;
+    field.tail_y = 3;
+
+    SetFieldType(field.head_x, field.head_y, E_HEAD);
+    SetFieldType(field.tail_x, field.tail_y, E_TAIL);
 }
 
-void gameplay_tick_100ms(key_type_t key_press)
+void gameplay_tick_100ms(key_type_t key_press, field_t * const field)
 {
+    const int game_speed = 10; // 1 second
+ 
+    static int current_time = 0;
+
+    static int game_over = 0;
+    static key_type_t previous_key = E_KEY_RIGHT;
+
+    if (!game_over) {
+        if (current_time == game_speed) {
+            printf("gamespeed=%d\r\n", current_time);
+            
+            // moving
+            {
+                // check direction
+                int new_x = field->head_x;
+                int new_y = field->head_y;
+
+                switch (key_press)
+                {
+                case E_KEY_UP:
+                    if (E_KEY_DOWN == previous_key) new_y++;
+                    else {
+                        new_y--;
+                        previous_key = key_press;
+                    }
+                    log("E_KEY_UP");
+                    break;
+                case E_KEY_DOWN:
+                    if (E_KEY_UP == previous_key)
+                        new_y--;
+                    else
+                    {
+                        new_y++;
+                        previous_key = key_press;
+                    }
+                    log("E_KEY_DOWN");
+                    break;
+                case E_KEY_LEFT:
+                    if (E_KEY_RIGHT == previous_key)
+                        new_x++;
+                    else
+                    {
+                        new_x--;
+                        previous_key = key_press;
+                    }
+                    log("E_KEY_LEFT");
+                    break;
+                case E_KEY_RIGHT:
+                    if (E_KEY_LEFT == previous_key)
+                        new_x--;
+                    else
+                    {
+                        new_x++;
+                        previous_key = key_press;
+                    }
+                    log("E_KEY_RIGHT");
+                    break;
+                }
+
+                // todo: dont update when direction is not changed
+                //previous_key = key_press;
+
+                // check boundaries
+                if (!IsPointValid(new_x, new_y)) {
+                    game_over = 1;
+                }
+
+                // check field type
+                if (!game_over) {
+                    if (E_EMPTY != GetFieldType(new_x, new_y)){
+                        game_over = 1;
+                    }
+                }
+
+                // change accordingly
+                if (!game_over) {
+                    SetFieldType(field->head_x, field->head_y, E_BODY);
+                    SetFieldType(new_x, new_y, E_HEAD);
+                    field->head_x = new_x;
+                    field->head_y = new_y;
+                }
+            }
+
+            current_time = 0;
+        }
+        else {
+            current_time++;
+        }
+    }
+    else
+        log("gameover");
+}
+
+void draw_field(SDL_Renderer * renderer, int i) {
+    // 1 field is 50 h and 50 w
+    // x + y * (LOGICAL_FIELD_HEIGHT - 1)
+
+    // todo: sanity check?
+    const int border_size = 1;
+
+    SDL_Rect frame;
+    frame.x = PIXEL_FIELD_WIDTH * (int)(i % LOGICAL_FIELD_WIDTH) + border_size;
+    frame.y = PIXEL_FIELD_HEIGHT * (int)(i / LOGICAL_FIELD_HEIGHT) + border_size;
+    frame.w = PIXEL_FIELD_WIDTH - 2 * border_size;
+    frame.h = PIXEL_FIELD_HEIGHT - 2 * border_size;
+    SDL_RenderFillRect(renderer, &frame);
+}
+
+void game_render(SDL_Renderer * renderer , const field_t * const field) {
+    int i;
+
+    for (i = 0; i < LOGICAL_FIELD_WIDTH * LOGICAL_FIELD_HEIGHT; i++) {
+        if (E_EMPTY != field->data[i])
+            draw_field(renderer, i);
+    }
 }
 
 int Snake_Run(void)
@@ -92,9 +225,12 @@ int Snake_Run(void)
     Uint32 last_time = SDL_GetTicks();
     Uint32 current_time = 0;
 
-    while (1) {
+    log("run");
+    g_data.running = 1;
+
+    while (g_data.running) {
         SDL_Event e;
-        key_type_t key_press = E_KEY_RIGHT;
+        static key_type_t key_press = E_KEY_RIGHT;
 
         current_time = SDL_GetTicks();
 
@@ -102,6 +238,7 @@ int Snake_Run(void)
             switch (e.type)
             {
             case SDL_QUIT:
+                g_data.running = 0;
                 break;
             case SDL_KEYDOWN:
                 switch (e.key.keysym.sym)
@@ -123,7 +260,9 @@ int Snake_Run(void)
         }
 
         //SDL_RenderClear(g_data.renderer);
-        if (current_time - last_time > 100){ // 100 ms timestamp
+        if (current_time - last_time >= 100){ // 100 ms timestamp
+            gameplay_tick_100ms(key_press, &field);
+            game_render(g_data.renderer, &field);
             SDL_RenderPresent(g_data.renderer);
             last_time = current_time;
         }
