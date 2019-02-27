@@ -1,16 +1,60 @@
 #include "SDL.h"
 #include "stdio.h"
 
+#include "stdlib.h"
+
 void log(const char * s) {
     printf("%s\r\n", s);
 }
 
 typedef enum
 {
-    E_EMPTY,
-    E_HEAD,
-    E_TAIL,
     E_BODY,
+    E_HEAD,
+    E_TAIL
+} sprite_type_t;
+
+typedef struct node_s node_t;
+
+typedef struct node_s
+{
+    node_t * prev;
+    node_t * next;
+    int x;
+    int y;
+    sprite_type_t sprite;
+} node_t;
+
+void InitSnakeNode(node_t ** start, int head_x, int head_y, int tail_x, int tail_y) {
+    // sanity check
+    node_t * head = (node_t*)calloc(1,sizeof(node_t));
+    node_t * tail = (node_t*)calloc(1,sizeof(node_t));
+
+    head->prev = tail;
+    head->x = head_x;
+    head->y = head_y;
+    head->sprite = E_HEAD;
+
+    tail->next = head;
+    tail->x = tail_x;
+    tail->y = tail_y;
+}
+
+void DeinitSnakeNode(node_t ** start) {
+}
+
+void MoveHead(node_t * node, int new_x, int new_y) {
+}
+
+void MoveTail(node_t * node) {
+}
+
+typedef enum
+{
+    E_EMPTY,
+    //E_HEAD,
+    //E_TAIL,
+    //E_BODY,
     E_BUG
 } field_type_t;
 
@@ -97,8 +141,9 @@ void Snake_Init(void)
     field.tail_x = 2;
     field.tail_y = 3;
 
-    SetFieldType(field.head_x, field.head_y, E_HEAD);
-    SetFieldType(field.tail_x, field.tail_y, E_TAIL);
+    // todo: fix field type? remove this for renderer
+    SetFieldType(field.head_x, field.head_y, E_BUG);
+    SetFieldType(field.tail_x, field.tail_y, E_BUG);
 }
 
 void gameplay_tick_100ms(key_type_t key_press, field_t * const field)
@@ -179,8 +224,8 @@ void gameplay_tick_100ms(key_type_t key_press, field_t * const field)
 
                 // change accordingly
                 if (!game_over) {
-                    SetFieldType(field->head_x, field->head_y, E_BODY);
-                    SetFieldType(new_x, new_y, E_HEAD);
+                    SetFieldType(field->head_x, field->head_y, E_BUG); // body
+                    SetFieldType(new_x, new_y, E_BUG); // head
                     field->head_x = new_x;
                     field->head_y = new_y;
                 }
