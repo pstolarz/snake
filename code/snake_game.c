@@ -7,98 +7,57 @@
 void log(const char * s) {
     printf("%s\r\n", s);
 }
-
-typedef struct node_s node_t;
-
-typedef struct node_s
-{
-    node_t * prev;
-    node_t * next;
-    int x;
-    int y;
-} node_t;
+#define MAX_SNAKE 100
 
 typedef struct snake_s
 {
-    node_t * head;
-    node_t * tail;
+    int head;
+    struct
+    {
+        int x, y;
+    } point[MAX_SNAKE];
 } snake_t;
 
-void InitSnakeNode(snake_t * parent, int head_x, int head_y, int tail_x, int tail_y) {
-    // todo: sanity check
-    node_t * head = (node_t*)calloc(1,sizeof(node_t));
-    node_t * tail = (node_t*)calloc(1,sizeof(node_t));
+void InitSnakeNode(snake_t * snake, int head_x, int head_y, int tail_x, int tail_y) {
+    snake->point[0].x = tail_x;
+    snake->point[0].y = tail_y;
+    snake->head++;
 
-    head->prev = tail; // [tail]<--[head]
-    head->x = head_x;
-    head->y = head_y;
-
-    tail->next = head; // [tail]-->[head]
-    tail->x = tail_x;
-    tail->y = tail_y;
-
-    parent->head = head;
-    parent->tail = tail;
-}
-
-void DeinitSnakeNode(node_t ** start) {
-    // todo: dealloc all shizzles
+    snake->point[1].x = head_x;
+    snake->point[1].y = head_y;
+    snake->head++;
 }
 
 void MoveSnake(snake_t * snake, int new_x, int new_y) {
     // traverse from tail to head
-    node_t * curr = snake->tail;
-    node_t * next = curr->next;
+    int prev = 0;
+    int next = 1;
 
-    while (1) {
-        if (next) {
-            curr->x = next->x;
-            curr->y = next->y;
-            curr = next; // increment
-            next = next->next;
-        }
-        else { // empty 'next' means its head
-            curr->x = new_x;
-            curr->y = new_y;
-            break;
-        }
+    while(next < snake->head) {
+        snake->point[prev].x = snake->point[next].x;
+        snake->point[prev].y = snake->point[next].y;
+        prev++; next++;
     }
+
+    snake->point[next-1].x = new_x;
+    snake->point[next-1].y = new_y;
 }
 
 // create new node and change head co-ord
-void AddAndMoveHead(snake_t * parent, int new_x, int new_y) {
-    node_t * new_head = (node_t*)calloc(1, sizeof(node_t));
-    node_t * old_head = parent->head;
-
-    // [tail]<--[new_body]--[head]
-    SDL_memcpy(new_head, old_head, sizeof(node_t));
-
-    // [tail]--[old_head]--[new_head]-->0
-    new_head->next = 0;
-    // [tail]--[old_head]<--[new_head]
-    new_head->prev = old_head;
-    new_head->x = new_x;
-    new_head->y = new_y;
-    // [tail]--[old_head]-->[new_head]
-    old_head->next = new_head;
-
-    parent->head = new_head;
+void AddAndMoveHead(snake_t * snake, int new_x, int new_y) {
+    // todo: sanity for snake->count
+    snake->point[snake->head].x = new_x;
+    snake->point[snake->head].y = new_y;
+    snake->head++;
 }
 
 // traverse for x,y co-ord
-int CollisionOccurred(snake_t * parent, int x, int y) {
-    node_t * i = parent->tail;
-
-    while (1)
-    {
-        if (i) {
-            if (i->x == x && i->y == y)
-                return 1;
+int CollisionOccurred(snake_t * snake, int x, int y) {
+    int i = 0;
+    for (; i < snake->head; i++) {
+        if (snake->point[i].x == x && snake->point[i].y == y) {
+            return 1;
         }
-        else {
-            break;
-        }
-        i = i->next;
     }
     return 0;
 }
@@ -234,8 +193,8 @@ void gameplay_tick_100ms(key_type_t key_press, snake_t * snake, bugs_t * bugs)
 
     if (!game_over) {
         if (current_time >= game_speed) {
-            int new_x = snake->head->x;
-            int new_y = snake->head->y;
+            int new_x = snake->point[snake->head - 1].x;
+            int new_y = snake->point[snake->head - 1].y;
 
             switch (key_press) // check direction
             {
@@ -316,17 +275,10 @@ void game_render(SDL_Renderer * renderer, snake_t * snake, bugs_t * bugs) {
 
     // render snake
     {
-        node_t * i = snake->tail;
+        int i = 0;
         SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
-        while (1)
-        {
-            if (i) {
-                draw_rect(renderer, i->x, i->y);
-            }
-            else {
-                break;
-            }
-            i = i->next;
+        for (; i < snake->head; i++) {
+            draw_rect(renderer, snake->point[i].x, snake->point[i].y);
         }
     }
 }
