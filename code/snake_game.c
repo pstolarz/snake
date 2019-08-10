@@ -28,7 +28,7 @@ void InitSnakeNode(snake_t * snake, int head_x, int head_y, int tail_x, int tail
     snake->head++;
 }
 
-void MoveSnake(snake_t * snake, int new_x, int new_y) {
+void MoveSnake(snake_t * const snake, int new_x, int new_y) {
     // traverse from tail to head
     int prev = 0;
     int next = 1;
@@ -44,15 +44,15 @@ void MoveSnake(snake_t * snake, int new_x, int new_y) {
 }
 
 // create new node and change head co-ord
-void AddAndMoveHead(snake_t * snake, int new_x, int new_y) {
-    // todo: sanity for snake->count
+void AddAndMoveHead(snake_t * const snake, int new_x, int new_y) {
+    // todo: sanity for snake->head
     snake->point[snake->head].x = new_x;
     snake->point[snake->head].y = new_y;
     snake->head++;
 }
 
 // traverse for x,y co-ord
-int CollisionOccurred(snake_t * snake, int x, int y) {
+int CollisionOccurred(const snake_t * const snake, int x, int y) {
     int i = 0;
     for (; i < snake->head; i++) {
         if (snake->point[i].x == x && snake->point[i].y == y) {
@@ -62,22 +62,23 @@ int CollisionOccurred(snake_t * snake, int x, int y) {
     return 0;
 }
 
-#define MAX_BUGS 1
+#define MAX_BUGS 2
 
 typedef struct {
     int count;
     struct
     {
+        int valid;
         int x, y;
     } bug[MAX_BUGS];
 } bugs_t;
 
-bugs_t; void InitBugs(bugs_t * bugs) {
+bugs_t; void InitBugs(bugs_t * const bugs) {
     bugs->count = 0;
     srand((unsigned)time(0));
 }
 
-void AddBug(bugs_t * bugs, snake_t * snake) {
+void AddBug(bugs_t * const bugs, const snake_t * const snake) {
     int upper = 9;
     int lower = 0;
 
@@ -98,8 +99,15 @@ void AddBug(bugs_t * bugs, snake_t * snake) {
     }
     // add new bug to bugs struct
     if (bugs->count < MAX_BUGS){
-        bugs->bug[bugs->count].x = x;
-        bugs->bug[bugs->count].y = y;
+        int i = 0;
+        for (; i < bugs->count; i++) {
+            if (bugs->bug[i].valid == 0) // search for first non-valid bug
+                break;
+        }
+
+        bugs->bug[i].x = x;
+        bugs->bug[i].y = y;
+        bugs->bug[i].valid = 1;
         printf("bug added: x=%d, y=%d\r\n", x, y);
         bugs->count++;
     }
@@ -107,7 +115,7 @@ void AddBug(bugs_t * bugs, snake_t * snake) {
 
 int BugEaten(bugs_t * bugs, int x, int y) {
     int bug_found = 0;
-    // search bugs
+    // search eaten bug
     int i = 0;
     for (; i < bugs->count; i++) {
         if (bugs->bug[i].x == x && bugs->bug[i].y == y) {
@@ -118,6 +126,7 @@ int BugEaten(bugs_t * bugs, int x, int y) {
     //if found, remove it
     if (bug_found) {
         printf("bug found: x=%d, y=%d\r\n", x, y);
+        bugs->bug[i].valid = 0;
         bugs->count--;
     }
     
@@ -229,8 +238,9 @@ void gameplay_tick_100ms(key_type_t key_press, snake_t * snake, bugs_t * bugs)
                 if (BugEaten(bugs, new_x, new_y)) {
                     AddAndMoveHead(snake, new_x, new_y);
                     AddBug(bugs, snake);
+                    AddBug(bugs, snake);
                     
-                    if (game_speed >= 2 && game_speed < 10) {
+                    if (game_speed >= 1 && game_speed < 10) {
                         game_speed--;
                         printf("gamespeed=%d\r\n", game_speed);
                     }
