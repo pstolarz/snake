@@ -2,7 +2,7 @@
 
 int main(int argc, char *argv[])
 {
-    Snake_Init();
+    Game_Init();
 
-    return Snake_Run();
+    return Game_Run();
 }

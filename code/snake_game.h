@@ -1,4 +1,4 @@
 
 
-void Snake_Init(void);
-int Snake_Run(void);
+void Game_Init(void);
+int Game_Run(void);

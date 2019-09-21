@@ -4,62 +4,10 @@
 #include "stdlib.h"
 #include "time.h"
 
-void log(const char * s) {
+#include <snake.h>
+
+void printLog(const char * s) {
     printf("%s\r\n", s);
-}
-#define MAX_SNAKE 100
-
-typedef struct snake_s
-{
-    int head;
-    struct
-    {
-        int x, y;
-    } point[MAX_SNAKE];
-} snake_t;
-
-void InitSnakeNode(snake_t * snake, int head_x, int head_y, int tail_x, int tail_y) {
-    snake->point[0].x = tail_x;
-    snake->point[0].y = tail_y;
-    snake->head++;
-
-    snake->point[1].x = head_x;
-    snake->point[1].y = head_y;
-    snake->head++;
-}
-
-void MoveSnake(snake_t * const snake, int new_x, int new_y) {
-    // traverse from tail to head
-    int prev = 0;
-    int next = 1;
-
-    while(next < snake->head) {
-        snake->point[prev].x = snake->point[next].x;
-        snake->point[prev].y = snake->point[next].y;
-        prev++; next++;
-    }
-
-    snake->point[next-1].x = new_x;
-    snake->point[next-1].y = new_y;
-}
-
-// create new node and change head co-ord
-void AddAndMoveHead(snake_t * const snake, int new_x, int new_y) {
-    // todo: sanity for snake->head
-    snake->point[snake->head].x = new_x;
-    snake->point[snake->head].y = new_y;
-    snake->head++;
-}
-
-// traverse for x,y co-ord
-int CollisionOccurred(const snake_t * const snake, int x, int y) {
-    int i = 0;
-    for (; i < snake->head; i++) {
-        if (snake->point[i].x == x && snake->point[i].y == y) {
-            return 1;
-        }
-    }
-    return 0;
 }
 
 #define MAX_BUGS 2
@@ -78,7 +26,7 @@ bugs_t; void InitBugs(bugs_t * const bugs) {
     srand((unsigned)time(0));
 }
 
-void AddBug(bugs_t * const bugs, const snake_t * const snake) {
+void AddBug(bugs_t * const bugs, const struct snake_body_s* const snake) {
     int upper = 9;
     int lower = 0;
 
@@ -90,7 +38,7 @@ void AddBug(bugs_t * const bugs, const snake_t * const snake) {
         y = (rand() % (upper - lower + 1)) + lower;
 
         // check collisions with snake
-        if (CollisionOccurred(snake, x, y)) {
+        if (Snake_CheckCollision(snake, x, y)) {
             continue;
         }
         else {
@@ -158,7 +106,7 @@ typedef struct
 {
     SDL_Window *    win;
     SDL_Renderer *  renderer;
-    snake_t         snake;
+    struct snake_body_s    snake;
     bugs_t          bugs;
 
     int posX;
@@ -171,7 +119,7 @@ typedef struct
 
 static game_data_t g_data;
 
-void Snake_Init(void)
+void Game_Init(void)
 {
     g_data.win = NULL;
     g_data.renderer = NULL;
@@ -188,12 +136,14 @@ void Snake_Init(void)
 
     SDL_SetRenderDrawColor(g_data.renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
 
-    InitSnakeNode(&g_data.snake, 2, 3, 1, 3);
+    Snake_Init(&g_data.snake, 50, 50);
+    Snake_SetStartLocation(&g_data.snake, 2, 3, 1, 3);
+
     InitBugs(&g_data.bugs);
     AddBug(&g_data.bugs, &g_data.snake);
 }
 
-void gameplay_tick_100ms(key_type_t key_press, snake_t * snake, bugs_t * bugs) 
+void gameplay_tick_100ms(key_type_t key_press, struct snake_body_s* snake, bugs_t * bugs)
 {
     static unsigned     game_speed = 5; // 1 second
     static unsigned     current_time = 0;
@@ -202,8 +152,8 @@ void gameplay_tick_100ms(key_type_t key_press, snake_t * snake, bugs_t * bugs)
 
     if (!game_over) {
         if (current_time >= game_speed) {
-            int new_x = snake->point[snake->head - 1].x;
-            int new_y = snake->point[snake->head - 1].y;
+            int new_x = snake->link[snake->head - 1].x;
+            int new_y = snake->link[snake->head - 1].y;
 
             switch (key_press) // check direction
             {
@@ -228,7 +178,7 @@ void gameplay_tick_100ms(key_type_t key_press, snake_t * snake, bugs_t * bugs)
 
             // check collisions with snake body
             if (!game_over) {
-                if (CollisionOccurred(snake, new_x, new_y)) {
+                if (Snake_CheckCollision(snake, new_x, new_y)) {
                     game_over = 1;
                 }
             }
@@ -236,7 +186,7 @@ void gameplay_tick_100ms(key_type_t key_press, snake_t * snake, bugs_t * bugs)
             // change snake body
             if (!game_over) {
                 if (BugEaten(bugs, new_x, new_y)) {
-                    AddAndMoveHead(snake, new_x, new_y);
+                    Snake_AddLinkAndMove(snake, new_x, new_y);
                     AddBug(bugs, snake);
                     AddBug(bugs, snake);
                     
@@ -246,7 +196,7 @@ void gameplay_tick_100ms(key_type_t key_press, snake_t * snake, bugs_t * bugs)
                     }
                 }
                 else
-                    MoveSnake(snake, new_x, new_y);
+                    Snake_Move(snake, new_x, new_y);
             }
             else {
                 const char * keys[4] = { "E_KEY_UP", "E_KEY_DOWN", "E_KEY_LEFT", "E_KEY_RIGH" };
@@ -259,7 +209,7 @@ void gameplay_tick_100ms(key_type_t key_press, snake_t * snake, bugs_t * bugs)
             current_time++;
         }
     }
-    //else log("gameover\r\n");
+    //else printLog("gameover\r\n");
 }
 
 void draw_rect(SDL_Renderer * renderer, int x, int y) {
@@ -273,7 +223,7 @@ void draw_rect(SDL_Renderer * renderer, int x, int y) {
     SDL_RenderFillRect(renderer, &frame);
 }
 
-void game_render(SDL_Renderer * renderer, snake_t * snake, bugs_t * bugs) {
+void game_render(SDL_Renderer * renderer, struct snake_body_s* snake, bugs_t * bugs) {
     // render bugs
     {
         int i = 0;
@@ -285,20 +235,20 @@ void game_render(SDL_Renderer * renderer, snake_t * snake, bugs_t * bugs) {
 
     // render snake
     {
-        int i = 0;
+        uint32_t i = 0;
         SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
         for (; i < snake->head; i++) {
-            draw_rect(renderer, snake->point[i].x, snake->point[i].y);
+            draw_rect(renderer, snake->link[i].x, snake->link[i].y);
         }
     }
 }
 
-int Snake_Run(void)
+int Game_Run(void)
 {
     Uint32 last_time = SDL_GetTicks();
     Uint32 current_time = 0;
 
-    log("run");
+    printLog("run");
     g_data.running = 1;
 
     while (g_data.running) {
@@ -335,6 +285,8 @@ int Snake_Run(void)
         }
     }
     
+    Snake_Deinit(&g_data.snake);
+
     SDL_DestroyRenderer(g_data.renderer);
     SDL_DestroyWindow(g_data.win);
 
