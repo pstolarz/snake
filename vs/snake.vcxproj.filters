@@ -21,9 +21,15 @@
     <ClCompile Include="..\code\snake_game.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\code\snake.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\code\snake_game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\code\snake.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
