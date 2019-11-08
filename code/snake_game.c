@@ -127,7 +127,7 @@ void Game_Init(void)
     g_data.posX = 100;
     g_data.posY = 100;
     g_data.screen_width = LOGICAL_FIELD_WIDTH * PIXEL_FIELD_WIDTH;
-    g_data.screen_height = LOGICAL_FIELD_WIDTH * PIXEL_FIELD_WIDTH;
+    g_data.screen_height = LOGICAL_FIELD_HEIGHT * PIXEL_FIELD_WIDTH;
 
     SDL_Init(SDL_INIT_VIDEO);
 
@@ -136,7 +136,7 @@ void Game_Init(void)
 
     SDL_SetRenderDrawColor(g_data.renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
 
-    Snake_Init(&g_data.snake, 50, 50);
+    Snake_Init(&g_data.snake, LOGICAL_FIELD_WIDTH, LOGICAL_FIELD_HEIGHT);
     Snake_SetStartLocation(&g_data.snake, 2, 3, 1, 3);
 
     InitBugs(&g_data.bugs);
@@ -152,8 +152,8 @@ void gameplay_tick_100ms(key_type_t key_press, struct snake_body_s* snake, bugs_
 
     if (!game_over) {
         if (current_time >= game_speed) {
-            int new_x = snake->link[snake->head - 1].x;
-            int new_y = snake->link[snake->head - 1].y;
+            int new_x = snake->pLinks[snake->head - 1].x;
+            int new_y = snake->pLinks[snake->head - 1].y;
 
             switch (key_press) // check direction
             {
@@ -200,7 +200,8 @@ void gameplay_tick_100ms(key_type_t key_press, struct snake_body_s* snake, bugs_
             }
             else {
                 const char * keys[4] = { "E_KEY_UP", "E_KEY_DOWN", "E_KEY_LEFT", "E_KEY_RIGH" };
-                printf("gameover at x=%d, y=%d, gamespeed=%d lastkey=%s, previous_key=%s\r\n", new_x, new_y, game_speed, keys[key_press], keys[previous_key]);
+                printf("gameover at x=%d, y=%d, gamespeed=%d lastkey=%s, previous_key=%s\r\n",
+                    new_x, new_y, game_speed, keys[key_press], keys[previous_key]);
             }
 
             current_time = 0;
@@ -224,6 +225,9 @@ void draw_rect(SDL_Renderer * renderer, int x, int y) {
 }
 
 void game_render(SDL_Renderer * renderer, struct snake_body_s* snake, bugs_t * bugs) {
+    SDL_SetRenderDrawColor(renderer, 0x00, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(renderer);
+
     // render bugs
     {
         int i = 0;
@@ -238,9 +242,11 @@ void game_render(SDL_Renderer * renderer, struct snake_body_s* snake, bugs_t * b
         uint32_t i = 0;
         SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
         for (; i < snake->head; i++) {
-            draw_rect(renderer, snake->link[i].x, snake->link[i].y);
+            draw_rect(renderer, snake->pLinks[i].x, snake->pLinks[i].y);
         }
     }
+
+    SDL_RenderPresent(renderer);
 }
 
 int Game_Run(void)
@@ -274,13 +280,9 @@ int Game_Run(void)
             }
         }
 
-        SDL_SetRenderDrawColor(g_data.renderer, 0x00, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(g_data.renderer);
-
         if (current_time - last_time >= 100){ // 100 ms timestamp
             gameplay_tick_100ms(key_press, &g_data.snake, &g_data.bugs);
             game_render(g_data.renderer, &g_data.snake, &g_data.bugs);
-            SDL_RenderPresent(g_data.renderer);
             last_time = current_time;
         }
     }
