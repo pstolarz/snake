@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-// Snake body link defined by x,y coordinates.
+// Snake body link defined by logical x,y coordinates.
 struct snake_body_link_s
 {
     uint32_t x, y;
