@@ -24,12 +24,21 @@
     <ClCompile Include="..\code\game.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\code\bugs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\code\snake.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\code\game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\code\bugs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\code\debug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -17,7 +17,7 @@ struct snake_body_s
 };
 
 // Initialize snake_body_s instance based on input paramters.
-void Snake_Init(struct snake_body_s* const snake, const uint32_t maxXLinks, const uint32_t maxYlinks);
+void Snake_Init(struct snake_body_s* const snake, const uint32_t xCount, const uint32_t yCount);
 void Snake_Deinit(struct snake_body_s* const snake);
 
 void Snake_SetStartLocation(struct snake_body_s* const snake, const uint32_t headX, const uint32_t headY, const uint32_t tailX, const uint32_t tailY);

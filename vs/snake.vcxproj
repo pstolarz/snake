@@ -69,11 +69,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\code\bugs.c" />
     <ClCompile Include="..\code\main.c" />
     <ClCompile Include="..\code\snake.c" />
     <ClCompile Include="..\code\game.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\code\bugs.h" />
+    <ClInclude Include="..\code\debug.h" />
     <ClInclude Include="..\code\snake.h" />
     <ClInclude Include="..\code\game.h" />
   </ItemGroup>

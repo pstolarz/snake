@@ -8,11 +8,11 @@
 #define LOG(a) printf(a)
 #define ASSERT(a) assert(a)
 
-void Snake_Init(struct snake_body_s* const snake, const uint32_t maxXLinks, const uint32_t maxYlinks)
+void Snake_Init(struct snake_body_s* const snake, const uint32_t xCount, const uint32_t yCount)
 {
     ASSERT(snake);
     {
-        snake->maxLinksCount = maxXLinks * maxYlinks;
+        snake->maxLinksCount = xCount * yCount;
         snake->pLinks = malloc(sizeof(struct snake_body_link_s) * snake->maxLinksCount);
     }
 }
