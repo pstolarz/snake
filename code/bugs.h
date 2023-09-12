@@ -2,8 +2,8 @@
 
 #include <stdint.h>
 
-#include "time.h"
-#include "stdlib.h" // srand
+#include <time.h>
+#include <stdlib.h> // srand
 
 
 #define MAX_BUGS 2

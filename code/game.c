@@ -1,9 +1,9 @@
-#include "SDL.h"
+#include <SDL2/SDL.h>
 
-#include <debug.h>
+#include "debug.h"
 
-#include <snake.h>
-#include <bugs.h>
+#include "snake.h"
+#include "bugs.h"
 
 typedef enum
 {
