@@ -1,6 +1,6 @@
-#include <bugs.h>
+#include "bugs.h"
 
-#include <debug.h>
+#include "debug.h"
 
 void Bugs_Init(struct bugs_s * const bugs)
 {
